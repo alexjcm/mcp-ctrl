@@ -1,5 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { readFile } from "node:fs/promises";
 
 import {
   applyEdits,
@@ -8,6 +7,7 @@ import {
   type ModificationOptions,
 } from "jsonc-parser";
 
+import { BackupService } from "../services/backup-service.js";
 import type { MCPAdapterState, MCPServer } from "../types/mcp.types.js";
 import { resolveConfigPath } from "../utils/paths.js";
 import {
@@ -20,6 +20,11 @@ import {
 
 export class VSCodeAdapter {
   readonly tool = "vscode";
+  private readonly backupService: BackupService;
+
+  constructor(backupService = new BackupService()) {
+    this.backupService = backupService;
+  }
 
   async read(path = resolveConfigPath(this.tool)): Promise<MCPAdapterState<string>> {
     const rawText = (await readTextIfExists(path)) ?? "{}\n";
@@ -50,8 +55,11 @@ export class VSCodeAdapter {
     const edits = modify(state.document, ["mcp.servers"], mergedEntries, formattingOptions(eol));
     const nextDocument = applyEdits(state.document, edits);
 
-    await mkdir(dirname(state.rawPath), { recursive: true });
-    await writeFile(state.rawPath, nextDocument, "utf8");
+    await this.backupService.writeWithBackup({
+      tool: this.tool,
+      targetPath: state.rawPath,
+      content: nextDocument,
+    });
 
     return this.read(state.rawPath);
   }

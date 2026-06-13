@@ -5,7 +5,7 @@ import * as TOML from "@iarna/toml";
 import { describe, expect, it } from "vitest";
 
 import { CodexAdapter } from "../src/adapters/codex-adapter.js";
-import { makeTempDir } from "./test-helpers.js";
+import { makeBackupService, makeTempDir } from "./test-helpers.js";
 
 describe("CodexAdapter", () => {
   it("reads portable servers and preserves non-portable entries on write", async () => {
@@ -32,7 +32,7 @@ describe("CodexAdapter", () => {
       "utf8",
     );
 
-    const adapter = new CodexAdapter();
+    const adapter = new CodexAdapter(await makeBackupService("mcp-ctrl-codex-service"));
     const state = await adapter.read(path);
 
     expect(state.servers).toEqual([
@@ -90,7 +90,7 @@ describe("CodexAdapter", () => {
     const dir = await makeTempDir("mcp-ctrl-codex-missing");
     const path = join(dir, "missing.toml");
 
-    const adapter = new CodexAdapter();
+    const adapter = new CodexAdapter(await makeBackupService("mcp-ctrl-codex-missing-service"));
     const state = await adapter.read(path);
 
     expect(state.servers).toEqual([]);

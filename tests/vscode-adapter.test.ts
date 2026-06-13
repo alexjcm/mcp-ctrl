@@ -5,7 +5,7 @@ import { parse } from "jsonc-parser";
 import { describe, expect, it } from "vitest";
 
 import { VSCodeAdapter } from "../src/adapters/vscode-adapter.js";
-import { makeTempDir } from "./test-helpers.js";
+import { makeBackupService, makeTempDir } from "./test-helpers.js";
 
 describe("VSCodeAdapter", () => {
   it("preserves comments and non-MCP settings while updating mcp.servers", async () => {
@@ -37,7 +37,7 @@ describe("VSCodeAdapter", () => {
       "utf8",
     );
 
-    const adapter = new VSCodeAdapter();
+    const adapter = new VSCodeAdapter(await makeBackupService("mcp-ctrl-vscode-service"));
     const state = await adapter.read(path);
 
     expect(state.servers).toEqual([
@@ -97,7 +97,7 @@ describe("VSCodeAdapter", () => {
     const dir = await makeTempDir("mcp-ctrl-vscode-missing");
     const path = join(dir, "settings.json");
 
-    const adapter = new VSCodeAdapter();
+    const adapter = new VSCodeAdapter(await makeBackupService("mcp-ctrl-vscode-missing-service"));
     const state = await adapter.read(path);
 
     expect(state.servers).toEqual([]);

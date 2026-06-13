@@ -1,12 +1,11 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { readFile } from "node:fs/promises";
 
 import * as TOML from "@iarna/toml";
 
+import { BackupService } from "../services/backup-service.js";
 import type { MCPAdapterState, MCPServer } from "../types/mcp.types.js";
 import { resolveConfigPath } from "../utils/paths.js";
 import {
-  detectEol,
   ensureTrailingNewline,
   isRecord,
   mergePortableServers,
@@ -16,6 +15,11 @@ import {
 
 export class CodexAdapter {
   readonly tool = "codex";
+  private readonly backupService: BackupService;
+
+  constructor(backupService = new BackupService()) {
+    this.backupService = backupService;
+  }
 
   async read(path = resolveConfigPath(this.tool)): Promise<MCPAdapterState<RawObject>> {
     const rawText = await readTextIfExists(path);
@@ -45,8 +49,11 @@ export class CodexAdapter {
       TOML.stringify(nextDocument as TOML.JsonMap),
       "\n",
     );
-    await mkdir(dirname(state.rawPath), { recursive: true });
-    await writeFile(state.rawPath, text, "utf8");
+    await this.backupService.writeWithBackup({
+      tool: this.tool,
+      targetPath: state.rawPath,
+      content: text,
+    });
 
     return this.read(state.rawPath);
   }

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { AntigravityAdapter } from "../src/adapters/antigravity-adapter.js";
-import { makeTempDir } from "./test-helpers.js";
+import { makeBackupService, makeTempDir } from "./test-helpers.js";
 
 describe("AntigravityAdapter", () => {
   it("reads portable servers and preserves non-portable entries on write", async () => {
@@ -36,7 +36,7 @@ describe("AntigravityAdapter", () => {
       "utf8",
     );
 
-    const adapter = new AntigravityAdapter();
+    const adapter = new AntigravityAdapter(await makeBackupService("mcp-ctrl-gemini-service"));
     const state = await adapter.read(path);
 
     expect(state.servers).toEqual([
@@ -88,7 +88,9 @@ describe("AntigravityAdapter", () => {
     const dir = await makeTempDir("mcp-ctrl-gemini-create");
     const path = join(dir, "nested", "config", "mcp_config.json");
 
-    const adapter = new AntigravityAdapter();
+    const adapter = new AntigravityAdapter(
+      await makeBackupService("mcp-ctrl-gemini-create-service"),
+    );
     const state = await adapter.read(path);
     await adapter.write(state, [
       {
