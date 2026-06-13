@@ -43,3 +43,45 @@ export interface ValidationResult {
   errors: ValidationIssue[];
   warnings: ValidationIssue[];
 }
+
+export interface MCPAdapter<TDocument = unknown> {
+  readonly tool: ToolName;
+  read(path?: string): Promise<MCPAdapterState<TDocument>>;
+  write(
+    state: MCPAdapterState<TDocument>,
+    servers: MCPServer[],
+  ): Promise<MCPAdapterState<TDocument>>;
+}
+
+export type SyncMode = "copy-new" | "overwrite";
+
+export interface SyncConflict {
+  name: string;
+  source: MCPServer;
+  destination: MCPServer;
+}
+
+export interface SyncSkippedServer {
+  name: string;
+  reasons: string[];
+}
+
+export interface SyncWarning {
+  name: string;
+  reasons: string[];
+}
+
+export interface SyncPlan {
+  sourceTool: ToolName;
+  destinationTool: ToolName;
+  onlyInSource: MCPServer[];
+  onlyInDestination: MCPServer[];
+  conflicts: SyncConflict[];
+  skipped: SyncSkippedServer[];
+  warnings: SyncWarning[];
+}
+
+export interface SyncResult {
+  plan: SyncPlan;
+  appliedServers: MCPServer[];
+}
