@@ -24,7 +24,10 @@ export class BackupService {
   private readonly maxBackupsPerTool: number;
 
   constructor(options: BackupServiceOptions = {}) {
-    this.backupRoot = options.backupRoot ?? join(homedir(), ".mcp-ctrl", "backups");
+    this.backupRoot =
+      options.backupRoot ??
+      process.env.MCP_CTRL_BACKUP_ROOT ??
+      join(homedir(), ".mcp-ctrl", "backups");
     this.maxBackupsPerTool = options.maxBackupsPerTool ?? DEFAULT_MAX_BACKUPS;
   }
 
