@@ -1,11 +1,11 @@
 import { BackupService } from "../services/backup-service.js";
 import { JsonMCPAdapter } from "./json-mcp-adapter.js";
 
-export class AntigravityAdapter extends JsonMCPAdapter {
+export class DevinAdapter extends JsonMCPAdapter {
   constructor(backupService = new BackupService()) {
     super({
       backupService,
-      tool: "antigravity",
+      tool: "devin",
     });
   }
 }

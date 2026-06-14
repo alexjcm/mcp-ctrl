@@ -1,15 +1,32 @@
 {
   "name": "mcp-ctrl",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Interactive CLI for managing local stdio MCP configurations",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsup src/index.ts src/cli.ts --format esm --dts --clean --external @iarna/toml --external @clack/prompts --external commander --external jsonc-parser",
-    "test": "vitest run"
+    "prepare": "npm run build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "mcp",
+    "cli",
+    "codex",
+    "vscode",
+    "gemini"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "mcp-ctrl": "./dist/cli.js"

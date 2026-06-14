@@ -17,3 +17,7 @@ export function writeStdout(message = ""): void {
 export function writeStderr(message = ""): void {
   process.stderr.write(`${message}\n`);
 }
+
+export function boldIfInteractiveOutput(value: string): string {
+  return hasInteractiveOutput() ? `\u001B[1m${value}\u001B[22m` : value;
+}

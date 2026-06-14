@@ -2,10 +2,9 @@
 
 import { Command } from "commander";
 
-import { BackupService } from "./services/backup-service.js";
 import { MCPRegistry } from "./services/mcp-registry.js";
 import { SyncService } from "./services/sync-service.js";
-import type { MCPServer, ToolName } from "./types/mcp.types.js";
+import type { ToolName } from "./types/mcp.types.js";
 import { TOOL_NAMES, formatToolName } from "./utils/tool-names.js";
 import { canPrompt, writeStderr, writeStdout } from "./utils/terminal.js";
 import {
@@ -19,16 +18,16 @@ import {
   showOutro,
 } from "./ui/prompts.js";
 import {
-  renderBackupList,
   renderConfigList,
   renderSyncPlan,
   renderSyncWarnings,
 } from "./ui/renderers.js";
 
-const backupService = new BackupService();
 const registry = new MCPRegistry({
   paths: compactToolPaths({
     codex: process.env.MCP_CTRL_CODEX_PATH,
+    devin: process.env.MCP_CTRL_DEVIN_PATH ?? process.env.MCP_CTRL_DEVIN_DESKTOP_PATH,
+    "codeium-jetbrains": process.env.MCP_CTRL_CODEIUM_JETBRAINS_PATH,
     antigravity: process.env.MCP_CTRL_ANTIGRAVITY_PATH,
     vscode: process.env.MCP_CTRL_VSCODE_PATH,
   }),
@@ -40,8 +39,7 @@ const program = new Command();
 program
   .name("mcp-ctrl")
   .description("Interactive CLI for managing local stdio MCP configurations")
-  .version("1.0.0")
-  .option("--debug", "show full error details")
+  .version("0.1.0")
   .showHelpAfterError();
 
 program.action(() => {
@@ -55,24 +53,6 @@ program
     const configs = await registry.list();
     writeStdout(renderConfigList(configs));
   }));
-
-const backupsCommand = program.command("backups").description("List stored backups");
-backupsCommand
-  .command("list")
-  .description("List backups for one tool or all tools")
-  .argument("[tool]", "tool name")
-  .action(
-    wrapAction(async (tool?: string) => {
-      const tools = tool ? [parseToolName(tool)] : TOOL_NAMES;
-      const blocks = [];
-
-      for (const item of tools) {
-        blocks.push(renderBackupList(item, await backupService.listBackups(item)));
-      }
-
-      writeStdout(blocks.join("\n\n"));
-    }),
-  );
 
 program
   .command("add")
@@ -259,13 +239,8 @@ void program.parseAsync(process.argv).catch((error: unknown) => {
     return;
   }
 
-  const debug = program.opts().debug;
   const message = error instanceof Error ? error.message : String(error);
   writeStderr(`Error: ${message}`);
-
-  if (debug && error instanceof Error && error.stack) {
-    writeStderr(error.stack);
-  }
 
   process.exitCode = 1;
 });
@@ -279,8 +254,10 @@ function wrapAction<TArgs extends unknown[]>(
 }
 
 function parseToolName(value: string): ToolName {
-  if (TOOL_NAMES.includes(value as ToolName)) {
-    return value as ToolName;
+  const normalized = normalizeToolAlias(value);
+
+  if (TOOL_NAMES.includes(normalized)) {
+    return normalized;
   }
 
   throw new Error(`unknown tool "${value}". Use one of: ${TOOL_NAMES.join(", ")}`);
@@ -310,4 +287,18 @@ function compactToolPaths(
   return Object.fromEntries(
     Object.entries(paths).filter(([, value]) => typeof value === "string" && value !== ""),
   ) as Partial<Record<ToolName, string>>;
+}
+
+function normalizeToolAlias(value: string): ToolName {
+  switch (value) {
+    case "devin":
+    case "devin-desktop":
+      return "devin";
+    case "codeium":
+    case "codeium-jetbrains":
+    case "windsurf-jetbrains":
+      return "codeium-jetbrains";
+    default:
+      return value as ToolName;
+  }
 }

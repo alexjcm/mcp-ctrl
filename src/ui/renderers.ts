@@ -1,17 +1,19 @@
 import type {
-  BackupEntry,
   MCPConfig,
   MCPServer,
   SyncPlan,
-  ToolName,
 } from "../types/mcp.types.js";
 import { formatToolName } from "../utils/tool-names.js";
+import { boldIfInteractiveOutput } from "../utils/terminal.js";
 import { renderServerSummary } from "./parsers.js";
 
 export function renderConfigList(configs: MCPConfig[]): string {
   return configs
     .map((config) => {
-      const lines = [formatToolName(config.tool)];
+      const lines = [
+        boldIfInteractiveOutput(formatToolName(config.tool)),
+        `  config: ${config.rawPath}`,
+      ];
 
       if (config.servers.length === 0) {
         lines.push("  (sin MCPs configurados)");
@@ -24,23 +26,6 @@ export function renderConfigList(configs: MCPConfig[]): string {
       return lines.join("\n");
     })
     .join("\n\n");
-}
-
-export function renderBackupList(tool: ToolName, backups: BackupEntry[]): string {
-  const lines = [formatToolName(tool)];
-
-  if (backups.length === 0) {
-    lines.push("  (sin backups)");
-    return lines.join("\n");
-  }
-
-  for (const backup of backups) {
-    lines.push(
-      `  - ${backup.fileName}  ${backup.size} bytes  ${backup.createdAt.toISOString()}`,
-    );
-  }
-
-  return lines.join("\n");
 }
 
 export function renderSyncPlan(plan: SyncPlan): string {

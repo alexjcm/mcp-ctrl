@@ -1,5 +1,7 @@
 import { AntigravityAdapter } from "../adapters/antigravity-adapter.js";
+import { CodeiumJetBrainsAdapter } from "../adapters/codeium-jetbrains-adapter.js";
 import { CodexAdapter } from "../adapters/codex-adapter.js";
+import { DevinAdapter } from "../adapters/devin-adapter.js";
 import { VSCodeAdapter } from "../adapters/vscode-adapter.js";
 import { ConfigValidator } from "./config-validator.js";
 import type {
@@ -24,6 +26,9 @@ export class MCPRegistry {
   constructor(options: MCPRegistryOptions = {}) {
     this.adapters = {
       codex: options.adapters?.codex ?? new CodexAdapter(),
+      devin: options.adapters?.devin ?? new DevinAdapter(),
+      "codeium-jetbrains":
+        options.adapters?.["codeium-jetbrains"] ?? new CodeiumJetBrainsAdapter(),
       antigravity: options.adapters?.antigravity ?? new AntigravityAdapter(),
       vscode: options.adapters?.vscode ?? new VSCodeAdapter(),
     };
@@ -87,7 +92,13 @@ export class MCPRegistry {
       return [toConfig(state)];
     }
 
-    const tools: ToolName[] = ["codex", "antigravity", "vscode"];
+    const tools: ToolName[] = [
+      "codex",
+      "devin",
+      "codeium-jetbrains",
+      "antigravity",
+      "vscode",
+    ];
     const states = await Promise.all(tools.map((item) => this.readState(item)));
 
     return states.map((state) => toConfig(state));

@@ -2,7 +2,7 @@ import { access } from "node:fs/promises";
 import { homedir } from "node:os";
 import { isAbsolute, posix, win32 } from "node:path";
 
-import type { MCPServer, ValidationIssue, ValidationResult } from "../types/mcp.types.js";
+import type { ValidationIssue, ValidationResult } from "../types/mcp.types.js";
 
 export interface ConfigValidatorOptions {
   homeDir?: string;
@@ -33,10 +33,10 @@ export class ConfigValidator {
     const errors: ValidationIssue[] = [];
     const warnings: ValidationIssue[] = [];
 
-    const name = this.validateRequiredString(input.name, "name", errors);
+    this.validateRequiredString(input.name, "name", errors);
     const command = this.validateRequiredString(input.command, "command", errors);
     const args = this.validateArgs(input.args, errors);
-    const env = this.validateEnv(input.env, errors);
+    this.validateEnv(input.env, errors);
 
     if (input.transport !== undefined && input.transport !== "stdio") {
       errors.push({

@@ -5,7 +5,12 @@ export interface MCPServer {
   env: Record<string, string>;
 }
 
-export type ToolName = "codex" | "antigravity" | "vscode";
+export type ToolName =
+  | "codex"
+  | "devin"
+  | "codeium-jetbrains"
+  | "antigravity"
+  | "vscode";
 
 export interface MCPConfig {
   tool: ToolName;

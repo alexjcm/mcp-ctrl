@@ -20,12 +20,20 @@ export function resolveConfigPath(
 
   switch (tool) {
     case "codex":
-      return join(homeDir, ".codex", "config.toml");
+      return joinForPlatform(platform, homeDir, ".codex", "config.toml");
+    case "devin":
+      return joinForPlatform(platform, homeDir, ".codeium", "windsurf", "mcp_config.json");
+    case "codeium-jetbrains":
+      return joinForPlatform(platform, homeDir, ".codeium", "mcp_config.json");
     case "antigravity":
-      return join(homeDir, ".gemini", "config", "mcp_config.json");
+      return joinForPlatform(platform, homeDir, ".gemini", "config", "mcp_config.json");
     case "vscode":
       return resolveVSCodeSettingsPath(platform, homeDir, appDataDir);
   }
+}
+
+function joinForPlatform(platform: NodeJS.Platform, ...segments: string[]): string {
+  return platform === "win32" ? win32.join(...segments) : join(...segments);
 }
 
 function resolveVSCodeSettingsPath(
