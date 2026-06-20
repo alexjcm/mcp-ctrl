@@ -29,3 +29,15 @@ export function cyanBoldIfInteractiveOutput(value: string): string {
 export function dimIfInteractiveOutput(value: string): string {
   return hasInteractiveOutput() ? `\u001B[2m${value}\u001B[22m` : value;
 }
+
+export function greenIfInteractiveOutput(value: string): string {
+  return hasInteractiveOutput() ? `\u001B[32m${value}\u001B[0m` : value;
+}
+
+export function yellowIfInteractiveOutput(value: string): string {
+  return hasInteractiveOutput() ? `\u001B[33m${value}\u001B[0m` : value;
+}
+
+export function redIfInteractiveOutput(value: string): string {
+  return hasInteractiveOutput() ? `\u001B[31m${value}\u001B[0m` : value;
+}

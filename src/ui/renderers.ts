@@ -4,15 +4,31 @@ import type {
   MCPConfig,
   MCPServer,
   SyncPlan,
+  ToolName,
+  ValidationResult,
 } from "../types/mcp.types.js";
 import { formatToolName } from "../utils/tool-names.js";
 import {
   boldIfInteractiveOutput,
   cyanBoldIfInteractiveOutput,
   dimIfInteractiveOutput,
+  greenIfInteractiveOutput,
   hasInteractiveOutput,
+  redIfInteractiveOutput,
+  yellowIfInteractiveOutput,
 } from "../utils/terminal.js";
 import { renderServerSummary } from "./parsers.js";
+
+export interface ServerCheckResult {
+  serverName: string;
+  result: ValidationResult;
+}
+
+export interface ToolCheckResult {
+  tool: ToolName;
+  rawPath: string;
+  servers: ServerCheckResult[];
+}
 
 export function renderConfigList(configs: MCPConfig[]): string {
   const home = homedir();
@@ -79,6 +95,59 @@ export function wrapText(text: string, indent: number): string {
   }
 
   return lines.join("\n" + " ".repeat(indent));
+}
+
+export function renderCheckResults(toolResults: ToolCheckResult[]): string {
+  const home = homedir();
+  let totalOk = 0;
+  let totalWarnings = 0;
+  let totalErrors = 0;
+
+  const sections = toolResults.map((toolResult) => {
+    const displayPath = toolResult.rawPath.replace(home, "~");
+    const lines = [
+      cyanBoldIfInteractiveOutput(formatToolName(toolResult.tool)),
+      dimIfInteractiveOutput(`  config: ${displayPath}`),
+    ];
+
+    if (toolResult.servers.length === 0) {
+      lines.push(dimIfInteractiveOutput("  (no servers to check)"));
+      return lines.join("\n");
+    }
+
+    for (const { serverName, result } of toolResult.servers) {
+      const hasErrors = result.errors.length > 0;
+      const hasWarnings = result.warnings.length > 0;
+
+      if (hasErrors) {
+        totalErrors++;
+        lines.push(`  ${redIfInteractiveOutput("✖")} ${boldIfInteractiveOutput(serverName)}`);
+        for (const issue of result.errors) {
+          lines.push(dimIfInteractiveOutput(`       ${issue.message}`));
+        }
+      } else if (hasWarnings) {
+        totalWarnings++;
+        lines.push(`  ${yellowIfInteractiveOutput("⚠")} ${boldIfInteractiveOutput(serverName)}`);
+        for (const issue of result.warnings) {
+          lines.push(dimIfInteractiveOutput(`      ${issue.message}`));
+        }
+      } else {
+        totalOk++;
+        lines.push(`  ${greenIfInteractiveOutput("✔")} ${boldIfInteractiveOutput(serverName)}`);
+      }
+    }
+
+    return lines.join("\n");
+  });
+
+  const summaryParts = [
+    greenIfInteractiveOutput(`${totalOk} ok`),
+    yellowIfInteractiveOutput(`${totalWarnings} ${totalWarnings === 1 ? "warning" : "warnings"}`),
+    redIfInteractiveOutput(`${totalErrors} ${totalErrors === 1 ? "error" : "errors"}`),
+  ];
+
+  sections.push(`\nSummary: ${summaryParts.join(" · ")}`);
+  return sections.join("\n\n");
 }
 
 export function renderSyncPlan(plan: SyncPlan): string {

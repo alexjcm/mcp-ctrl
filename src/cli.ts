@@ -2,6 +2,7 @@
 
 import { Command } from "commander";
 
+import { ConfigValidator } from "./services/config-validator.js";
 import { MCPRegistry } from "./services/mcp-registry.js";
 import { SyncService } from "./services/sync-service.js";
 import type { ToolName } from "./types/mcp.types.js";
@@ -18,9 +19,11 @@ import {
   showOutro,
 } from "./ui/prompts.js";
 import {
+  renderCheckResults,
   renderConfigList,
   renderSyncPlan,
   renderSyncWarnings,
+  type ToolCheckResult,
 } from "./ui/renderers.js";
 
 const registry = new MCPRegistry({
@@ -49,9 +52,52 @@ program.action(() => {
 program
   .command("list")
   .description("List configured MCP servers")
-  .action(wrapAction(async () => {
-    const configs = await registry.list();
+  .option("--tool <tool>", "filter output to a single tool")
+  .action(wrapAction(async (options: { tool?: string }) => {
+    const tool = options.tool ? parseToolName(options.tool) : undefined;
+    const configs = await registry.list(tool);
     writeStdout(renderConfigList(configs));
+  }));
+
+program
+  .command("check")
+  .description("Validate all configured MCP servers and report health")
+  .option("--tool <tool>", "check a single tool only")
+  .action(wrapAction(async (options: { tool?: string }) => {
+    const validator = new ConfigValidator();
+    const toolsToCheck = options.tool
+      ? [parseToolName(options.tool)]
+      : TOOL_NAMES;
+
+    const toolResults: ToolCheckResult[] = await Promise.all(
+      toolsToCheck.map(async (t) => {
+        const state = await registry.readState(t);
+        const allEntries = [
+          ...state.compatibility
+            .filter((c) => c.portable)
+            .map((c) => state.servers.find((s) => s.name === c.name))
+            .filter((s) => s !== undefined),
+        ];
+
+        const servers = await Promise.all(
+          allEntries.map(async (server) => ({
+            serverName: server.name,
+            result: await validator.validateServer(server),
+          })),
+        );
+
+        return { tool: t, rawPath: state.rawPath, servers };
+      }),
+    );
+
+    writeStdout(renderCheckResults(toolResults));
+
+    const hasErrors = toolResults.some((r) =>
+      r.servers.some((s) => s.result.errors.length > 0),
+    );
+    if (hasErrors) {
+      process.exitCode = 1;
+    }
   }));
 
 program
