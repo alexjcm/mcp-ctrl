@@ -21,3 +21,11 @@ export function writeStderr(message = ""): void {
 export function boldIfInteractiveOutput(value: string): string {
   return hasInteractiveOutput() ? `\u001B[1m${value}\u001B[22m` : value;
 }
+
+export function cyanBoldIfInteractiveOutput(value: string): string {
+  return hasInteractiveOutput() ? `\u001B[1;36m${value}\u001B[0m` : value;
+}
+
+export function dimIfInteractiveOutput(value: string): string {
+  return hasInteractiveOutput() ? `\u001B[2m${value}\u001B[22m` : value;
+}

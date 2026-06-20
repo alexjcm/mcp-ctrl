@@ -1,25 +1,43 @@
+import { homedir } from "node:os";
+
 import type {
   MCPConfig,
   MCPServer,
   SyncPlan,
 } from "../types/mcp.types.js";
 import { formatToolName } from "../utils/tool-names.js";
-import { boldIfInteractiveOutput } from "../utils/terminal.js";
+import {
+  boldIfInteractiveOutput,
+  cyanBoldIfInteractiveOutput,
+  dimIfInteractiveOutput,
+  hasInteractiveOutput,
+} from "../utils/terminal.js";
 import { renderServerSummary } from "./parsers.js";
 
 export function renderConfigList(configs: MCPConfig[]): string {
+  const home = homedir();
   return configs
     .map((config) => {
+      const displayPath = config.rawPath.replace(home, "~");
       const lines = [
-        boldIfInteractiveOutput(formatToolName(config.tool)),
-        `  config: ${config.rawPath}`,
+        cyanBoldIfInteractiveOutput(formatToolName(config.tool)),
+        dimIfInteractiveOutput(`  config: ${displayPath}`),
       ];
 
       if (config.servers.length === 0) {
-        lines.push("  (sin MCPs configurados)");
+        lines.push(dimIfInteractiveOutput("  (no MCPs configured)"));
       } else {
+        const bullet = hasInteractiveOutput() ? "\u001B[36m●\u001B[0m" : "-";
         for (const server of config.servers) {
-          lines.push(`  - ${server.name.padEnd(12)} ${renderServerSummary(server)}`);
+          const summary = renderServerSummary(server);
+          const cleanedSummary = summary.replace(home, "~");
+          const indentSize = 16;
+          const wrappedSummary = hasInteractiveOutput()
+            ? wrapText(cleanedSummary, indentSize)
+            : cleanedSummary;
+          const formattedSummary = dimIfInteractiveOutput(wrappedSummary);
+          const formattedName = boldIfInteractiveOutput(server.name.padEnd(12));
+          lines.push(`  ${bullet} ${formattedName} ${formattedSummary}`);
         }
       }
 
@@ -28,20 +46,55 @@ export function renderConfigList(configs: MCPConfig[]): string {
     .join("\n\n");
 }
 
+export function wrapText(text: string, indent: number): string {
+  const cols = process.stdout.columns || 80;
+  const availableWidth = cols - indent;
+
+  if (availableWidth <= 10 || text.length <= availableWidth) {
+    return text;
+  }
+
+  const lines: string[] = [];
+  const words = text.split(" ");
+  let currentLine = "";
+
+  for (const word of words) {
+    if (word.length > availableWidth) {
+      if (currentLine) {
+        lines.push(currentLine);
+        currentLine = "";
+      }
+      lines.push(word);
+    } else if (currentLine.length + word.length + (currentLine ? 1 : 0) <= availableWidth) {
+      currentLine += (currentLine ? " " : "") + word;
+    } else {
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      currentLine = word;
+    }
+  }
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines.join("\n" + " ".repeat(indent));
+}
+
 export function renderSyncPlan(plan: SyncPlan): string {
   const lines = [
-    `Origen: ${formatToolName(plan.sourceTool)}`,
-    `Destino: ${formatToolName(plan.destinationTool)}`,
+    `Source: ${formatToolName(plan.sourceTool)}`,
+    `Destination: ${formatToolName(plan.destinationTool)}`,
     "",
-    "Nuevos en origen:",
+    "New in source:",
     ...renderServerNames(plan.onlyInSource),
     "",
-    "Solo en destino:",
+    "Only in destination:",
     ...renderServerNames(plan.onlyInDestination),
     "",
-    "Conflictos:",
+    "Conflicts:",
     ...(plan.conflicts.length === 0
-      ? ["  (sin conflictos)"]
+      ? ["  (no conflicts)"]
       : plan.conflicts.map(
           (conflict) =>
             `  - ${conflict.name}: ${renderServerSummary(conflict.destination)} -> ${renderServerSummary(conflict.source)}`,
@@ -55,11 +108,11 @@ export function renderSyncWarnings(plan: SyncPlan): string[] {
   const messages: string[] = [];
 
   for (const item of plan.skipped) {
-    messages.push(`omitido "${item.name}": ${item.reasons.join("; ")}`);
+    messages.push(`skipped "${item.name}": ${item.reasons.join("; ")}`);
   }
 
   for (const item of plan.warnings) {
-    messages.push(`advertencia "${item.name}": ${item.reasons.join("; ")}`);
+    messages.push(`warning "${item.name}": ${item.reasons.join("; ")}`);
   }
 
   return messages;
@@ -67,6 +120,6 @@ export function renderSyncWarnings(plan: SyncPlan): string[] {
 
 function renderServerNames(servers: MCPServer[]): string[] {
   return servers.length === 0
-    ? ["  (ninguno)"]
+    ? ["  (none)"]
     : servers.map((server) => `  - ${server.name}`);
 }

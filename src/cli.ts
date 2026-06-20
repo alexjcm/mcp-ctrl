@@ -65,7 +65,7 @@ program
       const tool = await promptTool("Tool");
       const server = await promptServerDefinition();
       const confirmed = await promptConfirmation(
-        `Agregar "${server.name}" en ${formatToolName(tool)}?`,
+        `Add "${server.name}" to ${formatToolName(tool)}?`,
       );
 
       if (!confirmed) {
@@ -73,7 +73,7 @@ program
       }
 
       await registry.add(tool, server);
-      showOutro(`Servidor "${server.name}" agregado en ${formatToolName(tool)}.`);
+      showOutro(`Server "${server.name}" added to ${formatToolName(tool)}.`);
     }),
   );
 
@@ -96,7 +96,7 @@ program
 
       const name =
         nameArg ??
-        (await promptServerSelection("Servidor", state.servers));
+        (await promptServerSelection("Server", state.servers));
       const current = state.servers.find((server) => server.name === name);
 
       if (!current) {
@@ -105,7 +105,7 @@ program
 
       const next = await promptServerDefinition(current);
       const confirmed = await promptConfirmation(
-        `Guardar cambios de "${name}" en ${formatToolName(tool)}?`,
+        `Save changes for "${name}" in ${formatToolName(tool)}?`,
       );
 
       if (!confirmed) {
@@ -113,7 +113,7 @@ program
       }
 
       await registry.update(tool, name, next);
-      showOutro(`Servidor "${name}" actualizado en ${formatToolName(tool)}.`);
+      showOutro(`Server "${name}" updated in ${formatToolName(tool)}.`);
     }),
   );
 
@@ -144,11 +144,11 @@ program
         throw new Error(`no portable servers found in ${formatToolName(tool)}`);
       }
 
-      name = name ?? (await promptServerSelection("Servidor", state.servers));
+      name = name ?? (await promptServerSelection("Server", state.servers));
 
       if (!options?.yes) {
         const confirmed = await promptConfirmation(
-          `Eliminar "${name}" de ${formatToolName(tool)}?`,
+          `Remove "${name}" from ${formatToolName(tool)}?`,
           false,
         );
 
@@ -160,7 +160,7 @@ program
       await registry.remove(tool, name);
 
       if (interactive) {
-        showOutro(`Servidor "${name}" eliminado de ${formatToolName(tool)}.`);
+        showOutro(`Server "${name}" removed from ${formatToolName(tool)}.`);
       } else {
         writeStdout(`Removed "${name}" from ${tool}.`);
       }
@@ -195,9 +195,9 @@ program
           showIntro("mcp-ctrl sync");
         }
 
-        sourceTool = sourceTool ?? (await promptTool("Origen"));
+        sourceTool = sourceTool ?? (await promptTool("Source"));
         destinationTool =
-          destinationTool ?? (await promptTool("Destino", alternateTool(sourceTool)));
+          destinationTool ?? (await promptTool("Destination", alternateTool(sourceTool)));
 
         if (sourceTool === destinationTool) {
           throw new Error("source and destination must be different tools");
@@ -214,7 +214,7 @@ program
 
         if (!options.yes) {
           const confirmed = await promptConfirmation(
-            `Aplicar sync ${mode} de ${formatToolName(sourceTool)} hacia ${formatToolName(destinationTool)}?`,
+            `Apply ${mode} sync from ${formatToolName(sourceTool)} to ${formatToolName(destinationTool)}?`,
           );
 
           if (!confirmed) {
@@ -225,7 +225,7 @@ program
         await syncService.apply(sourceTool, destinationTool, mode);
 
         if (interactive) {
-          showOutro("Sync completado.");
+          showOutro("Sync completed.");
         } else {
           writeStdout("Sync completed.");
         }

@@ -114,4 +114,36 @@ describe("JSON MCP hosts", () => {
       },
     ]);
   });
+
+  it("reads config files containing comments", async () => {
+    const dir = await makeTempDir("mcp-ctrl-comments");
+    const path = join(dir, "mcp_config.json");
+
+    await writeFile(
+      path,
+      `{
+        // comment at root
+        "mcpServers": {
+          // comment inside servers
+          "local": {
+            "command": "npx",
+            "args": ["-y", "local-server"]
+          }
+        }
+      }`,
+      "utf8",
+    );
+
+    const adapter = new DevinAdapter(await makeBackupService("mcp-ctrl-comments-service"));
+    const state = await adapter.read(path);
+
+    expect(state.servers).toEqual([
+      {
+        name: "local",
+        command: "npx",
+        args: ["-y", "local-server"],
+        env: {},
+      },
+    ]);
+  });
 });

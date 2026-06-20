@@ -1,10 +1,16 @@
 import { readFile } from "node:fs/promises";
+import {
+  applyEdits,
+  modify,
+  parse,
+  type ModificationOptions,
+} from "jsonc-parser";
 
 import { BackupService } from "../services/backup-service.js";
-import type { MCPAdapterState, MCPServer, ToolName } from "../types/mcp.types.js";
+import type { MCPAdapter, MCPAdapterState, MCPServer, ToolName } from "../types/mcp.types.js";
 import { resolveConfigPath } from "../utils/paths.js";
 import {
-  ensureTrailingNewline,
+  detectEol,
   isRecord,
   mergePortableServers,
   toPortableServer,
@@ -17,7 +23,7 @@ export interface JsonMCPAdapterOptions {
   tool: ToolName;
 }
 
-export class JsonMCPAdapter {
+export class JsonMCPAdapter implements MCPAdapter<string> {
   readonly tool: ToolName;
   private readonly backupService: BackupService;
   private readonly key: string;
@@ -28,51 +34,53 @@ export class JsonMCPAdapter {
     this.key = options.key ?? "mcpServers";
   }
 
-  async read(path = resolveConfigPath(this.tool)): Promise<MCPAdapterState<RawObject>> {
-    const rawText = await readTextIfExists(path);
-    const document = rawText ? parseJsonDocument(rawText) : {};
-    const entries = extractRecord(document, this.key);
+  async read(path = resolveConfigPath(this.tool)): Promise<MCPAdapterState<string>> {
+    const rawText = (await readTextIfExists(path)) ?? "{}\n";
+    const document = parse(rawText) as unknown;
+    const root = isRecord(document) ? document : {};
+    const entries = extractRecord(root, this.key);
     const { compatibility, servers } = collectServers(entries);
 
     return {
       tool: this.tool,
       servers,
       rawPath: path,
-      document,
+      document: rawText,
       compatibility,
     };
   }
 
   async write(
-    state: MCPAdapterState<RawObject>,
+    state: MCPAdapterState<string>,
     servers: MCPServer[],
-  ): Promise<MCPAdapterState<RawObject>> {
-    const nextDocument = { ...state.document };
-    const currentEntries = extractRecord(nextDocument, this.key);
+  ): Promise<MCPAdapterState<string>> {
+    const currentRoot = parse(state.document) as unknown;
+    const root = isRecord(currentRoot) ? currentRoot : {};
+    const currentEntries = extractRecord(root, this.key);
     const mergedEntries = mergePortableServers(currentEntries, state.compatibility, servers);
-    nextDocument[this.key] = mergedEntries;
+    const eol = detectEol(state.document);
 
-    const eol = detectEolFromDocument(state.document);
-    const text = ensureTrailingNewline(JSON.stringify(nextDocument, null, 2), eol);
+    const edits = modify(state.document, [this.key], mergedEntries, formattingOptions(eol));
+    const nextDocument = applyEdits(state.document, edits);
 
     await this.backupService.writeWithBackup({
       tool: this.tool,
       targetPath: state.rawPath,
-      content: text,
+      content: nextDocument,
     });
 
     return this.read(state.rawPath);
   }
 }
 
-function parseJsonDocument(rawText: string): RawObject {
-  const parsed = JSON.parse(rawText) as unknown;
-
-  if (!isRecord(parsed)) {
-    return {};
-  }
-
-  return parsed;
+function formattingOptions(eol: string): ModificationOptions {
+  return {
+    formattingOptions: {
+      eol,
+      insertSpaces: true,
+      tabSize: 2,
+    },
+  };
 }
 
 function extractRecord(document: RawObject, key: string): RawObject {
@@ -94,10 +102,6 @@ function collectServers(entries: RawObject): Pick<MCPAdapterState, "servers" | "
   }
 
   return { servers, compatibility };
-}
-
-function detectEolFromDocument(document: RawObject): string {
-  return "_eol" in document && typeof document._eol === "string" ? document._eol : "\n";
 }
 
 async function readTextIfExists(path: string): Promise<string | undefined> {

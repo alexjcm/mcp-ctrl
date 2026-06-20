@@ -140,18 +140,18 @@ export async function promptServerSelection(
 
 export async function promptMode(): Promise<"copy-new" | "overwrite"> {
   const result = await select<"copy-new" | "overwrite">({
-    message: "Modo de sync",
+    message: "Sync mode",
     initialValue: "copy-new",
     options: [
       {
         value: "copy-new",
         label: "copy-new",
-        hint: "agrega solo nuevos",
+        hint: "adds new servers only",
       },
       {
         value: "overwrite",
         label: "overwrite",
-        hint: "reemplaza conflictos",
+        hint: "overwrites conflicts",
       },
     ],
   });
@@ -170,7 +170,7 @@ export async function promptConfirmation(message: string, initialValue = true): 
 
 function requirePromptValue<T>(value: T | symbol): T {
   if (isCancel(value)) {
-    showCancel("Operación cancelada.");
+    showCancel("Operation cancelled.");
   }
 
   return value;
