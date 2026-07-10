@@ -1,4 +1,5 @@
 export * from "./adapters/antigravity-adapter.js";
+export * from "./adapters/claude-code-adapter.js";
 export * from "./adapters/codeium-jetbrains-adapter.js";
 export * from "./adapters/codex-adapter.js";
 export * from "./adapters/devin-adapter.js";

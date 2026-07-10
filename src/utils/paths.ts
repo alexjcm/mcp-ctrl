@@ -27,6 +27,8 @@ export function resolveConfigPath(
       return joinForPlatform(platform, homeDir, ".codeium", "mcp_config.json");
     case "antigravity":
       return joinForPlatform(platform, homeDir, ".gemini", "config", "mcp_config.json");
+    case "claude-code":
+      return joinForPlatform(platform, homeDir, ".claude.json");
     case "vscode":
       return resolveVSCodeSettingsPath(platform, homeDir, appDataDir);
   }

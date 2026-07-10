@@ -32,6 +32,7 @@ const registry = new MCPRegistry({
     devin: process.env.MCP_CTRL_DEVIN_PATH ?? process.env.MCP_CTRL_DEVIN_DESKTOP_PATH,
     "codeium-jetbrains": process.env.MCP_CTRL_CODEIUM_JETBRAINS_PATH,
     antigravity: process.env.MCP_CTRL_ANTIGRAVITY_PATH,
+    "claude-code": process.env.MCP_CTRL_CLAUDE_CODE_PATH,
     vscode: process.env.MCP_CTRL_VSCODE_PATH,
   }),
 });

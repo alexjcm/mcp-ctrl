@@ -5,6 +5,7 @@ export const TOOL_NAMES: ToolName[] = [
   "devin",
   "codeium-jetbrains",
   "antigravity",
+  "claude-code",
   "vscode",
 ];
 
@@ -18,6 +19,8 @@ export function formatToolName(tool: ToolName): string {
       return "Codeium JetBrains (Windsurf Plugins)";
     case "antigravity":
       return "Antigravity/Gemini";
+    case "claude-code":
+      return "Claude Code";
     case "vscode":
       return "VSCode";
   }

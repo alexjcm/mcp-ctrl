@@ -27,6 +27,12 @@ describe("resolveConfigPath", () => {
     ).toBe("/home/tester/.codeium/mcp_config.json");
   });
 
+  it("resolves Claude Code path", () => {
+    expect(resolveConfigPath("claude-code", { homeDir: "/home/tester", platform: "linux" })).toBe(
+      "/home/tester/.claude.json",
+    );
+  });
+
   it("resolves VSCode path on macOS", () => {
     expect(resolveConfigPath("vscode", { homeDir: "/Users/tester", platform: "darwin" })).toBe(
       "/Users/tester/Library/Application Support/Code/User/settings.json",
@@ -65,5 +71,14 @@ describe("resolveConfigPath", () => {
         platform: "win32",
       }),
     ).toBe("C:\\Users\\tester\\.codeium\\mcp_config.json");
+  });
+
+  it("resolves Claude Code path on Windows", () => {
+    expect(
+      resolveConfigPath("claude-code", {
+        homeDir: "C:\\Users\\tester",
+        platform: "win32",
+      }),
+    ).toBe("C:\\Users\\tester\\.claude.json");
   });
 });

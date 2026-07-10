@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { ClaudeCodeAdapter } from "../src/adapters/claude-code-adapter.js";
 import { CodeiumJetBrainsAdapter } from "../src/adapters/codeium-jetbrains-adapter.js";
 import { DevinAdapter } from "../src/adapters/devin-adapter.js";
 import { makeBackupService, makeTempDir } from "./test-helpers.js";
@@ -145,5 +146,97 @@ describe("JSON MCP hosts", () => {
         env: {},
       },
     ]);
+  });
+
+  it("reads and writes Claude Code user-scope mcpServers while preserving project data", async () => {
+    const dir = await makeTempDir("mcp-ctrl-claude-code");
+    const path = join(dir, ".claude.json");
+
+    await writeFile(
+      path,
+      JSON.stringify(
+        {
+          theme: "light",
+          mcpServers: {
+            local: {
+              command: "npx",
+              args: ["-y", "local-server"],
+              disabledTools: ["danger"],
+            },
+            remote: {
+              url: "https://example.com/mcp",
+            },
+          },
+          projects: {
+            "/tmp/project": {
+              mcpServers: {
+                projectOnly: {
+                  command: "uvx",
+                },
+              },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const adapter = new ClaudeCodeAdapter(await makeBackupService("mcp-ctrl-claude-code-service"));
+    const state = await adapter.read(path);
+
+    expect(state.servers).toEqual([
+      {
+        name: "local",
+        command: "npx",
+        args: ["-y", "local-server"],
+        env: {},
+      },
+    ]);
+    expect(state.compatibility).toEqual([
+      {
+        name: "local",
+        portable: true,
+        reasons: ["additional fields will not be synced: disabledTools"],
+      },
+      {
+        name: "remote",
+        portable: false,
+        reasons: [
+          "missing string command",
+          "additional fields will not be synced: url",
+        ],
+      },
+    ]);
+
+    await adapter.write(state, [
+      {
+        name: "beta",
+        command: "node",
+        args: ["server.mjs"],
+        env: {},
+      },
+    ]);
+
+    const output = JSON.parse(await readFile(path, "utf8")) as {
+      theme: string;
+      mcpServers: Record<string, Record<string, unknown>>;
+      projects: {
+        "/tmp/project": {
+          mcpServers: {
+            projectOnly: {
+              command: string;
+            };
+          };
+        };
+      };
+    };
+
+    expect(output.theme).toBe("light");
+    expect(output.projects["/tmp/project"].mcpServers.projectOnly.command).toBe("uvx");
+    expect(output.mcpServers.local).toBeUndefined();
+    expect(output.mcpServers.remote.url).toBe("https://example.com/mcp");
+    expect(output.mcpServers.beta.command).toBe("node");
   });
 });

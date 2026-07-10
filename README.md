@@ -1,11 +1,11 @@
 # mcp-ctrl
 
-Interactive CLI for managing local `stdio` MCP configurations across `Codex`, `Devin`, `Codeium JetBrains (Windsurf Plugins)`, `Antigravity/Gemini`, and `VSCode`.
+Interactive CLI for managing local `stdio` MCP configurations across `Codex`, `Devin`, `Codeium JetBrains (Windsurf Plugins)`, `Antigravity/Gemini`, `Claude Code`, and `VSCode`.
 
 Current limits:
 
 - local `stdio` servers only
-- no `Claude Code`
+- `Claude Code` support is user-scope only (`~/.claude.json` top-level `mcpServers`)
 - no remote `http` servers
 - no VSCode workspace settings
 - no backup restore
@@ -52,6 +52,7 @@ npm unlink -g mcp-ctrl
 | `Devin` | `~/.codeium/windsurf/mcp_config.json` | `%USERPROFILE%\.codeium\windsurf\mcp_config.json` |
 | `Codeium JetBrains (Windsurf Plugins)` | `~/.codeium/mcp_config.json` | `%USERPROFILE%\.codeium\mcp_config.json` |
 | `Antigravity/Gemini` | `~/.gemini/config/mcp_config.json` | `~/.gemini/config/mcp_config.json` |
+| `Claude Code` | `~/.claude.json` (user scope only) | `%USERPROFILE%\.claude.json` (user scope only) |
 | `VSCode` | `$HOME/Library/Application Support/Code/User/settings.json` on macOS, `$HOME/.config/Code/User/settings.json` on Linux | `%APPDATA%\Code\User\settings.json` |
 
 # References

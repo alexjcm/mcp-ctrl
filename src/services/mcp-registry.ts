@@ -1,4 +1,5 @@
 import { AntigravityAdapter } from "../adapters/antigravity-adapter.js";
+import { ClaudeCodeAdapter } from "../adapters/claude-code-adapter.js";
 import { CodeiumJetBrainsAdapter } from "../adapters/codeium-jetbrains-adapter.js";
 import { CodexAdapter } from "../adapters/codex-adapter.js";
 import { DevinAdapter } from "../adapters/devin-adapter.js";
@@ -30,6 +31,7 @@ export class MCPRegistry {
       "codeium-jetbrains":
         options.adapters?.["codeium-jetbrains"] ?? new CodeiumJetBrainsAdapter(),
       antigravity: options.adapters?.antigravity ?? new AntigravityAdapter(),
+      "claude-code": options.adapters?.["claude-code"] ?? new ClaudeCodeAdapter(),
       vscode: options.adapters?.vscode ?? new VSCodeAdapter(),
     };
     this.paths = options.paths ?? {};
@@ -97,6 +99,7 @@ export class MCPRegistry {
       "devin",
       "codeium-jetbrains",
       "antigravity",
+      "claude-code",
       "vscode",
     ];
     const states = await Promise.all(tools.map((item) => this.readState(item)));

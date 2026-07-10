@@ -10,6 +10,7 @@ export type ToolName =
   | "devin"
   | "codeium-jetbrains"
   | "antigravity"
+  | "claude-code"
   | "vscode";
 
 export interface MCPConfig {
