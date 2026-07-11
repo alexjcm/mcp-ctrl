@@ -8,7 +8,9 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsup src/index.ts src/cli.ts --format esm --dts --clean --external @iarna/toml --external @clack/prompts --external commander --external jsonc-parser",
+    "build": "npm run build:js && npm run build:types",
+    "build:js": "tsup src/index.ts src/cli.ts --format esm --clean --external @iarna/toml --external @clack/prompts --external commander --external jsonc-parser",
+    "build:types": "tsc --emitDeclarationOnly --declaration --declarationMap -p tsconfig.json",
     "prepare": "npm run build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -37,13 +39,10 @@
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
     "@types/node": "^25.9.3",
-    "@typescript-eslint/eslint-plugin": "^8.61.0",
-    "@typescript-eslint/parser": "^8.61.0",
-    "eslint": "^10.4.1",
     "jsonc-parser": "^3.3.1",
     "prettier": "^3.8.4",
     "tsup": "^8.5.1",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.8"
   },
   "dependencies": {
